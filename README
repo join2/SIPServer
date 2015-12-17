@@ -12,6 +12,8 @@ perl modules to run:
      XML::Simple - for parsing the config file
      UNIVERSAL::require - for loading the correct ILS interface module
      Clone - for running the test cases
+     Cache::Memcached
+     Inline::Python - for Invenio interaction
 
 LOGGING
 
