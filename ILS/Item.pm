@@ -34,42 +34,55 @@ use Sys::Syslog qw(syslog);
 
 use ILS::Transaction;
 
-our %item_db = (
-		'1565921879' => {
-				 title => "Perl 5 desktop reference",
-				 id => '1565921879',
-				 sip_media_type => '001',
-				 magnetic_media => 0,
-				 hold_queue => [],
-				},
-		'0440242746' => {
-				 title => "The deep blue alibi",
-				 id => '0440242746',
-				 sip_media_type => '001',
-				 magnetic_media => 0,
-				 hold_queue => [],
-		},
-		'660' => {
-				 title => decode_utf8('Harry Potter y el cáliz de fuego'),
-				 id => '660',
-				 sip_media_type => '001',
-				 magnetic_media => 0,
-				 hold_queue => [],
-			 },
-		);
+use Inline Python => <<'END';
+
+from invenio.bibcirculation_dblayer import 	get_recid, \
+											get_queue_request,\
+											get_loan_due_date,\
+											is_item_on_loan
+											
+from invenio.search_engine_utils import get_fieldvalues
+
+END
 
 sub new {
     my ($class, $item_id) = @_;
     my $type = ref($class) || $class;
     my $self;
+    
+    my $recid = sprintf("%d",get_recid($item_id)); # Make sure its an int
 
 
-    if (!exists($item_db{$item_id})) {
+    if ($recid == 0) {
 	syslog("LOG_DEBUG", "new ILS::Item('%s'): not found", $item_id);
 	return undef;
-    }
+    };
+    
+    my $loan_id = is_item_on_loan($item_id); # Retrieve the loan_id
+    my $due_date = get_loan_due_date($loan_id); # Invenio format yyyy-mm-dd
+    
+    
 
-    $self = $item_db{$item_id};
+    my  $book_title     = join(" ",get_fieldvalues($recid, "245__a"),
+                          get_fieldvalues($recid, "245__b"),
+                          get_fieldvalues($recid, "245__n"), 
+                          get_fieldvalues($recid, "245__p"));
+    
+	my $h_queue = get_queue_request($recid);
+	# This is an array of borrower ids e.g.  [['5'],['6']];
+	# We flatten this
+	my @hold_queue = map  {@$_} @$h_queue; # ['5','6'] or ''
+	# Make sure its an array
+	@hold_queue = [] unless (@hold_queue);
+
+    $self =  {
+				 title => decode_utf8($book_title),
+				 id => $item_id,
+				 recid => $recid,
+				 sip_media_type => '001',
+				 magnetic_media => 0,
+				 hold_queue => @hold_queue,
+			 };
     bless $self, $type;
 
     syslog("LOG_DEBUG", "new ILS::Item('%s'): found with title '%s'",
@@ -78,7 +91,18 @@ sub new {
     return $self;
 }
 
+sub recid {
+    my $self = shift;
+    return $self->{recid};
+}
+
+# Is this needed?
 sub magnetic {
+    my $self = shift;
+    return $self->{magnetic_media};
+}
+
+sub magnetic_media {
     my $self = shift;
     return $self->{magnetic_media};
 }
@@ -146,12 +170,12 @@ sub fee {
 
 sub fee_currency {
     my $self = shift;
-    return $self->{currency} || 'CAD';
+    return $self->{currency} || 'EUR';
 }
 
 sub owner {
     my $self = shift;
-    return 'UWOLS';
+    return 'UWOLS'; # FIXME
 }
 
 sub hold_queue {
@@ -175,7 +199,7 @@ sub due_date {
     my $self = shift;
 
     if ($self->{due_date}) {
-        return Sip::timestamp($self->{due_date});
+        return Sip::timestamp($self->{due_date}); # Epoc time!
     } else {
         return 0;
     }
@@ -211,5 +235,32 @@ sub available {
 	     || ($self->{patron_id} && ($self->{patron_id} eq $for_patron)
 		 && !scalar @{$self->{hold_queue}}));
 }
+
+sub collection_code {
+	 my $self = shift;
+	return $self->{collection_code} || '';
+}
+
+sub call_number {
+	 my $self = shift;
+	return $self->{call_number} || '';
+}
+
+sub destination_loc {
+	 my $self = shift;
+	return $self->{destination_loc} || '';
+}
+
+sub hold_patron_bcode {
+	 my $self = shift;
+	return $self->{hold_patron_bcode} || '';
+}
+
+sub hold_patron_name {
+	 my $self = shift;
+	return $self->{hold_patron_name} || '';
+}
+
+
 
 1;

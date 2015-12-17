@@ -1,10 +1,8 @@
 <!--
 #
 # Copyright (C) 2006-2008  Georgia Public Library Service
-# Copyright (C) 2013 Equinox Software, Inc.
 # 
 # Author: David J. Fiander
-# Author: Mike Rylander
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of version 2 of the GNU General Public
@@ -25,48 +23,24 @@
 
   <error-detect enabled="true" />
 
-  <!-- Set Net::Server runtime parameters.  "personality" may -->
-  <!-- be either PreFork or Multiplex. -->
+  <!-- Set Net::Server::PreFork runtime parameters -->
   <server-params
-           personality='PreFork'
            min_servers='1'
            min_spare_servers='0' />
   
   
   <listeners>
     <service
-      port="0:8080/tcp"
-      transport="http"
-      protocol="NCIP/1.0" />
-
-    <service
-      port="8023/tcp"
-      transport="telnet"
-      protocol="SIP/1.00"
-      timeout="60" />
-
-    <service
-      port="127.0.0.1:6001/tcp"
+      port="*:6001/tcp"
       transport="RAW" 
       protocol="SIP/2.00"
-      allow_sc_status_then_login="disabled"
+      allow="*"
       timeout="60" />
   </listeners>
 
-  <!-- One or more Memecache servers are required for Mulitplex mode. -->
-  <!-- Cache server(s) are ignored in non-Multiplex mode -->
-  <cache>
-    <server>127.0.0.1:11211</server>
-  </cache>
-
   <accounts>
-      <login id="scclient" password="clientpwd" institution="UWOLS">
+      <login id="desy" password="desi1234" institution="DESY">
       </login>
-      <login id="scclient-2" password="clientpwd-2"
-             institution="UWOLS" />
-      <login id="lpl-sc" password="1234" institution="LPL" />
-      <login id="lpl-sc-beacock" password="xyzzy"
-             delimiter="|" error-detect="enabled" institution="LPL" />
   </accounts>
 
 <!-- Institution tags will hold stuff used to interface to -->
@@ -75,15 +49,11 @@
 <!-- needs to be one institution stanza for each institution -->
 <!-- named in the accounts above. -->
 <institutions>
-    <institution id="UWOLS" implementation="ILS" parms="">
+    <institution id="DESY" implementation="ILS" parms="">
           <policy checkin="true" renewal="false"
 	  	  status_update="false" offline="false"
 		  timeout="600"
 	  	  retries="3" />
-          <relais_extensions_to_msg24 enabled="false" />
-    </institution>
-
-    <institution id="LPL" implementation="ILS">
     </institution>
 </institutions>
 </acsconfig>

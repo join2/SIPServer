@@ -36,6 +36,8 @@ use ILS::Transaction::Hold;
 use ILS::Transaction::Renew;
 use ILS::Transaction::RenewAll;
 
+our $debug;
+
 my %supports = (
 		'magnetic media'	=> 1,
 		'security inhibit'	=> 0,
@@ -168,17 +170,24 @@ sub checkout {
 	# I can't deal with this right now
 	$circ->screen_msg("Item checked out to another patron");
     } else {
-	$circ->ok(1);
-	# If the item is already associated with this patron, then
-	# we're renewing it.
-	$circ->renew_ok($item->{patron} && ($item->{patron} eq $patron_id));
-	$item->{patron} = $patron_id;
-	$item->{due_date} = time + (14*24*60*60); # two weeks
-	push(@{$patron->{items}}, $item_id);
-	$circ->desensitize(!$item->magnetic);
+	    $circ->do_checkout();
+        if ($circ->ok){
+    	    $debug and warn "circ is ok";
+            # If the item is already associated with this patron, then
+        	# we're renewing it.
+            $circ->renew_ok($item->{patron} && ($item->{patron} eq $patron_id));
+               
+            $item->{patron} = $patron_id;
+            $item->{due_date} = $circ->{due};
+            push(@{$patron->{items}}, $item_id);
+            $circ->desensitize(!$item->magnetic_media);
 
-	syslog("LOG_DEBUG", "ILS::Checkout: patron %s has checked out %s",
-	       $patron_id, join(', ', encode_utf8(@{$patron->{items}})));
+            syslog("LOG_DEBUG", "ILS::Checkout: patron %s has checked out %s",
+                    $patron_id, join(', ', @{$patron->{items}}));
+        }
+        else {
+        	syslog("LOG_ERR", "ILS::Checkout Issue failed");
+        }
     }
 
     # END TRANSACTION
@@ -187,13 +196,23 @@ sub checkout {
 }
 
 sub checkin {
-    my ($self, $item_id, $trans_date, $return_date,
-	$current_loc, $item_props, $cancel) = @_;
+    my ($self, $item_id, $current_loc, $trans_date, $return_date,
+	$item_props, $cancel, $check_in_ok) = @_;
     my ($patron, $item, $circ);
 
     $circ = new ILS::Transaction::Checkin;
     # BEGIN TRANSACTION
     $circ->item($item = new ILS::Item $item_id);
+    
+    if ($item) {
+        $circ->do_checkin( $current_loc, $return_date );
+    }
+    else {
+        $circ->alert(1);
+        $circ->alert_type(99);
+        $circ->screen_msg('Invalid Item');
+    }
+
 
     # It's ok to check it in if it exists, and if it was checked out
     $circ->ok($item && $item->{patron});

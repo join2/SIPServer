@@ -37,6 +37,15 @@ my %fields = (
 	      sort_bin => undef,
 	      );
 
+use Sys::Syslog qw(syslog);
+
+use Inline Python => <<'END';
+
+from invenio.bibcirculation_dblayer import 	update_item_status, \
+											update_loan_info
+END
+
+
 sub new {
     my $class = shift;;
     my $self = $class->SUPER::new();
@@ -50,6 +59,22 @@ sub new {
 
     return bless $self, $class;
 }
+
+sub do_checkin {
+	my $self = shift;
+	my $current_loc = shift;
+	my $sc_return_date = shift; # Note, this is SC format
+	$sc_return_date =~  /(\d\d\d\d)(\d\d)(\d\d)    (\d\d)(\d\d)(\d\d)/;
+	my $return_date = "$1-$2-$3"; # INVENIO needs YYYY-MM-DD
+	
+	my $barcode = $self->{item}->id;
+	update_item_status('available',$barcode );
+    update_loan_info($return_date, 'returned',$barcode);
+    syslog("LOG_DEBUG", "ILS::Transaction::Checkin: Item %s returned at %s",
+                    $barcode,$return_date);
+}
+
+
 
 sub resensitize {
     my $self = shift;
