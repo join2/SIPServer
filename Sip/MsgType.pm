@@ -1189,8 +1189,8 @@ sub handle_item_information {
                 }
             }
         }
-    }
-
+    };
+    #$resp="1804000120150513    133739CF00000|AH21-05-2015|AB12345|AJDer disziplinierende Staat V 2012|AY8AZDAA2";
     $self->write_msg($resp);
 
     return(ITEM_INFORMATION);

@@ -42,85 +42,19 @@ our (@ISA, @EXPORT_OK);
 
 use Inline Python => <<'END';
 
-from invenio.bibcirculation_dblayer import get_borrower_details,\
-										   get_borrower_loans
-
-from invenio.dbquery import run_sql
-
-def get_borrower_data_by_mailbox(mailbox):
-    """
-    Retrieve borrower's data by mailbox.
-    """
-
-    res = run_sql("""select id, name, email, phone,
-                            address, mailbox
-                       from crcBORROWER
-                      where mailbox=%s""",
-                  (mailbox, ))
-    if res:
-        return res[0]
-    else:
-        return None
+from invenio.libSIP_join2 import patron
 
 END
 
 sub new {
     my ($class, $patron_id) = @_;
     my $type = ref($class) || $class;
-    my $self;
-
-	# At the end we assume patron_id to be the barcode == mailbox below
-	# For the moment it's the borrower_id
-	
-	my ($borrower_id, $name, $email, $phone, $address, $mailbox) = 
-		get_borrower_data_by_mailbox($patron_id); # Only first result
-
-    if (int($borrower_id) == 0) {
+    my $self = patron($patron_id);
+    unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Patron(%s): no such patron", $patron_id);
 	return undef;
     }
     
-            
-    $self = {
-    		  name => $name,
-		      id => $patron_id, # ??
-		      internal_id => $borrower_id, # 
-		      password => '6789', #FIXME
-		      ptype => 'A', # 'A'dult.  Whatever.
-		      birthdate => '19640925',
-		      address => $address,
-		      home_phone => $phone,
-		      email_addr => $email,
-		      #home_library => 'DESY HH',
-		      charge_ok => 1, # ??
-		      renew_ok => 1,
-		      recall_ok => 1, # 0 ?
-		      hold_ok => 1,
-		      card_lost => 0, # FIXME
-		      claims_returned => 0, # FIXME
-		      fines => 0,
-		      fees => 0,
-		      recall_overdue => 0,
-		      items_billed => 0,
-		      screen_msg => '',
-		      print_line => '',
-		      items => [], #  get_borrower_loans  Ausleihen
-		      hold_items => [], # get_borrower_requests 
-		      overdue_items => [], # get_all_expired_loans() and grep borrowerid
-		      fine_items => [],
-		      recall_items => [],
-		      unavail_holds => [],
-		      inet => 1,
-		      expire => '20501231',
-	};
-	
-	my @loans = get_borrower_loans($borrower_id);
-    # e.g. ((77233L, '12345', '2015-12-12', '2016-01-09', 'normal'),)
-    foreach my $loan (@loans) {
-    	my $barcode = $loan->[1];
-    	push(@{$self->{items}},$barcode); #
-    };
-
     syslog("LOG_DEBUG", "new ILS::Patron(%s): found patron '%s'", $patron_id,
 	   $self->{id});
 
@@ -421,6 +355,7 @@ sub inet_privileges {
 
     return $self->{inet} ? 'Y' : 'N';
 }
+
 
 # Extension requested by PINES. Report the home system for
 # the patron in the 'AQ' field. This is normally the "permanent

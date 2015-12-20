@@ -102,7 +102,7 @@ sub do_checkout {
 	# available???
 	# is_on_loan
 	# is_requested
-    $self->{due} = $due_date;
+    $self->{due} = $due_epoc; # Must be epoc time
     # TO DO?
     # Add Due date in item?
     
