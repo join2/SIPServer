@@ -40,77 +40,38 @@ use ILS::Patron;
 
 use Inline Python => <<'END';
 
-from invenio.bibcirculation_dblayer import 	get_recid, \
-											get_queue_request,\
-											get_loan_due_date,\
-											is_item_on_loan,\
-											get_borrower_id, \
-											get_borrower_details
-											
-from invenio.search_engine_utils import get_fieldvalues
-
-from invenio.libILS_join2 import *
+from invenio.libSIP_join2 import item
 
 END
 
 sub new {
     my ($class, $item_id) = @_;
     my $type = ref($class) || $class;
-    my $self;
+    my $self = item($item_id);
     
-    my $recid = sprintf("%d",get_recid($item_id)); # Make sure its an int
-
-
-    if ($recid == 0) {
+    unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Item('%s'): not found", $item_id);
 	return undef;
     };
     
-    my $loan_id = is_item_on_loan($item_id); # Retrieve the loan_id
-    my $due_date = get_loan_due_date($loan_id); # Invenio format yyyy-mm-dd
-    $due_date = str2time($due_date); # Epoc Format
-    # If it is on loan retrieve Borrower (Patron)
-    my $patron;
-    my $borrower_id = get_borrower_id($item_id);
-    if ($borrower_id) {
-    	my $borrower_barcode = get_borrower_details($borrower_id)->[5];
-    	$patron = ILS::Patron->new($borrower_barcode);
-    };
-
-    my  $book_title     = join(" ",get_fieldvalues($recid, "245__a"),
-                          get_fieldvalues($recid, "245__b"),
-                          get_fieldvalues($recid, "245__n"), 
-                          get_fieldvalues($recid, "245__p"));
-    
-	my $h_queue = get_queue_request($recid);
-	# This is an array of borrower ids e.g.  [['5'],['6']];
-	# We flatten this
-	my @hold_queue = map  {@$_} @$h_queue; # ['5','6'] or ''
-	# Make sure its an array
-	@hold_queue = [] unless (@hold_queue);
-
-  $self =  {
-				 title => decode_utf8($book_title),
-				 id => $item_id,
-				 recid => $recid,
-				 sip_media_type => '001',
-				 magnetic_media => 0,
-				 hold_queue => @hold_queue,
-				 due_date => $due_date,
-         #patron => $patron->id,          
-				 #patron => $patron,
-			 };
-    if ($patron) {
-       $self->{patron}=$patron->id;
+    if ($self->{patron_id})  {
+    	# Store the perl patron object ??
+	$self->{patron} = ILS::Patron->new($self->{patron_id});
     };
     
     bless $self, $type;
 
     syslog("LOG_DEBUG", "new ILS::Item('%s'): found with title '%s'",
-	   $item_id, encode_utf8($self->{title}));
+	   $self->{item_id}, encode_utf8($self->{title}));
 
     return $self;
 }
+
+sub id {
+    my $self = shift;
+    return $self->{id};
+}
+
 
 sub recid {
     my $self = shift;
@@ -147,21 +108,23 @@ sub status_update {
 }
 
     
-sub id {
-    my $self = shift;
-    return $self->{id};
-}
 sub title_id {
     my $self = shift;
     return $self->{title};
 }
+
+sub title {
+    my $self = shift;
+    return $self->{title};
+}
+
 sub permanent_location {
     my $self = shift;
-    return $self->{permanent_location} || '';
+    return $self->{permanent_location} || 'DESY ';
 }
 sub current_location {
     my $self = shift;
-    return $self->{current_location} || '';
+    return $self->{current_location} || 'DESY';
 }
 
 sub sip_circulation_status {
@@ -177,11 +140,13 @@ sub sip_circulation_status {
 }
 
 sub sip_security_marker {
-    return '02';
+    my $self = shift;
+    return $self->{sip_security_marker} || '02'
 }
 
 sub sip_fee_type {
-    return '01';
+    my $self = shift;
+    return $self->{sip_fee_type} || '01'
 }
 
 sub fee {
@@ -196,7 +161,7 @@ sub fee_currency {
 
 sub owner {
     my $self = shift;
-    return 'DESY'; # FIXME
+    return $self->{owner} || 'DESY'; 
 }
 
 sub hold_queue {
@@ -228,10 +193,18 @@ sub due_date {
     }
 }
 
+
 sub recall_date {
     my $self = shift;
     return $self->{recall_date} || 0;
 }
+
+sub patron_id {
+    my $self = shift;
+    return $self->{patron_id} || undef;
+}
+
+
 sub hold_pickup_date {
     my $self = shift;
     return $self->{hold_pickup_date} || 0;
