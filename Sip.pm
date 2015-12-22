@@ -242,6 +242,8 @@ sub write_msg {
     }
 
     my $outmsg = "$msg\r";
+    # We encode the outmsg in cp850 and we assume $outmsg is utf8 encoded
+    $outmsg = encode("cp850",decode("utf8",$outmsg));
 
     if ($file) {
         print $file $outmsg;

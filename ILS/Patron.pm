@@ -29,6 +29,7 @@ use strict;
 use warnings;
 use Exporter;
 
+
 use Sys::Syslog qw(syslog);
 use Data::Dumper;
 
@@ -76,8 +77,7 @@ sub internal_id {
 
 sub name {
     my $self = shift;
-
-    return $self->{name};
+	return $self->{name}; 
 }
 
 sub address {

@@ -48,7 +48,7 @@ sub new {
     my ($class, $item_id) = @_;
     my $type = ref($class) || $class;
     my $self = item("$item_id"); # Make sure it's a string
-    
+        
     unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Item('%s'): not found", $item_id);
 	return undef;
@@ -62,7 +62,8 @@ sub new {
     bless $self, $type;
 
     syslog("LOG_DEBUG", "new ILS::Item('%s'): found with title '%s'",
-	   $item_id, encode_utf8($self->{title}));
+    	$item_id, $self->{title});
+   
 
     return $self;
 }
