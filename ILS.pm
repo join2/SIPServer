@@ -178,6 +178,10 @@ sub checkout {
             $circ->renew_ok($item->{patron} && ($item->{patron} eq $patron_id));
                
             $item->{patron} = $patron_id;
+            
+            # Since $item->{due_date} might be undef, we need to delete it first
+            # otherwise we encounter "Modification of non-creatable hash value attempted, subscript "_" at ILS.pm line 181." error
+            delete($item->{due_date});
             $item->{due_date} = $circ->{due};
             push(@{$patron->{items}}, $item_id);
             $circ->desensitize(!$item->magnetic_media);

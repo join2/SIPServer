@@ -106,6 +106,10 @@ sub do_checkout {
     # TO DO?
     # Add Due date in item?
     
+    # We need the due date in this transaction
+    $self->{'due'} = $due_epoc;
+    
+    
 	$self->ok(1);
 	return $self;
 }

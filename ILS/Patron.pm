@@ -49,7 +49,7 @@ END
 sub new {
     my ($class, $patron_id) = @_;
     my $type = ref($class) || $class;
-    my $self = patron($patron_id);
+    my $self = patron("$patron_id"); # Make sure it's a string
     unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Patron(%s): no such patron", $patron_id);
 	return undef;
