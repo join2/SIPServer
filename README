@@ -13,12 +13,19 @@ perl modules to run:
      UNIVERSAL::require - for loading the correct ILS interface module
      Clone - for running the test cases
      Cache::Memcached
-     Inline::Python - for Invenio interaction
+     Inline::Python - for Invenio interaction. This interface relies
+                      on `libSIP_join2.py` and `libILS_join2.py`
 
-Note: if Inline::Python is not available from the distribution compile
+Notes:
+
+- If Inline::Python is not available from the distribution compile
 at least v0.28 from CPAN. Make sure that it is compiled and linked
 against the current python binaries. Especially `urandom` is known to
 cause trouble due to security changes.
+- Inline::Python uses caching. Make sure to remove teh `_Inline`
+  directory on changes to the code.
+- Inline::Python imports all functions to the _global_ namespace of
+  the application.
 
 LOGGING
 
