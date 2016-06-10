@@ -40,14 +40,14 @@ use ILS::Patron;
 
 use Inline Python => <<'END';
 
-from invenio.libSIP_join2 import item
+from invenio.libSIP_join2 import item as invenio_item
 
 END
 
 sub new {
     my ($class, $item_id) = @_;
     my $type = ref($class) || $class;
-    my $self = item("$item_id"); # Make sure it's a string
+    my $self = invenio_item("$item_id"); # Make sure it's a string
         
     unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Item('%s'): not found", $item_id);

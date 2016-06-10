@@ -33,26 +33,25 @@ use ILS::Transaction;
 our @ISA = qw(ILS::Transaction);
 
 my %fields = (
-	      magnetic => 0,
-	      sort_bin => undef,
-	      );
+	magnetic => 0,
+	sort_bin => undef,
+	);
 
 use Sys::Syslog qw(syslog);
 
 use Inline Python => <<'END';
 
-from invenio.bibcirculation_dblayer import 	update_item_status, \
-											update_loan_info
+from invenio.libSIP_join2 import checkin
+
 END
 
 
 sub new {
     my $class = shift;;
     my $self = $class->SUPER::new();
-    my $element;
 
-    foreach $element (keys %fields) {
-	$self->{_permitted}->{$element} = $fields{$element};
+    foreach my $element (keys %fields) {
+		$self->{_permitted}->{$element} = $fields{$element};
     }
 
     @{$self}{keys %fields} = values %fields;
@@ -68,10 +67,9 @@ sub do_checkin {
 	my $return_date = "$1-$2-$3"; # INVENIO needs YYYY-MM-DD
 	
 	my $barcode = $self->{item}->id;
-	update_item_status('available',$barcode );
-    update_loan_info($return_date, 'returned',$barcode);
+	checkin($barcode, $return_date);
     syslog("LOG_DEBUG", "ILS::Transaction::Checkin: Item %s returned at %s",
-                    $barcode,$return_date);
+           $barcode, $return_date);
 }
 
 

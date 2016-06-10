@@ -43,14 +43,14 @@ our (@ISA, @EXPORT_OK);
 
 use Inline Python => <<'END';
 
-from invenio.libSIP_join2 import patron
+from invenio.libSIP_join2 import patron as invenio_patron
 
 END
 
 sub new {
     my ($class, $patron_id) = @_;
     my $type = ref($class) || $class;
-    my $self = patron("$patron_id"); # Make sure it's a string
+    my $self = invenio_patron("$patron_id"); # Make sure it's a string
     unless ($self) {
 	syslog("LOG_DEBUG", "new ILS::Patron(%s): no such patron", $patron_id);
 	return undef;
