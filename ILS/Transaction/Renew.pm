@@ -72,15 +72,19 @@ sub do_renew {
 	$self->ok(0);
 	syslog('LOG_DEBUG', "ILS::Transaction::Renew due: $due_date...");
 	if ($due_date == -1) {
+		$self->screen_msg("Invalid Patron");
 		syslog('LOG_DEBUG', "ILS::Transaction::Renew Unknown patron $patron_id");
 	}
 	elsif ($due_date == -2) {
+		$self->screen_msg("Item on loan");
 		syslog('LOG_DEBUG', "ILS::Transaction::Renew Item already on loan: $barcode");
 	}
 	elsif ($due_date == -3) {
+		$self->screen_msg("Unknown item");
 		syslog('LOG_DEBUG', "ILS::Transaction::Renew Duplicate / unknown barcode");
 	}
 	elsif ($due_date == -4) {
+		$self->screen_msg("Item requested by other patron");
 		syslog('LOG_DEBUG', "ILS::Transaction::Renew item on hold");
 	}
 	elsif ($due_date == 0) {
