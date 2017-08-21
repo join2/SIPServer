@@ -45,6 +45,8 @@ Notes:
 - If `Inline::Python` is not available from the distribution compile at least v0.28 from CPAN. Make sure that it is compiled and linked against the current python binaries. Especially `urandom` is known to cause trouble due to security changes.
 - `Inline::Python` uses caching. Make sure to remove the `_Inline` directory on changes to the code.
 - `Inline::Python` imports all functions to the _global_ namespace of the application.
+- `sip_ils` may server as an outline for a simple init script to ensure the service is (re)started after (re)boot. It follows RedHat chkconfig style.
+
 
 LOGGING
 -------
