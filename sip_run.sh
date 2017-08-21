@@ -16,22 +16,25 @@
 #   sip_run.sh ~/my_sip/SIPconfig.xml sip_out.log sip_err.log
 
 
-for x in HOME PERL5LIB; do
-	echo $x=${!x}
-	if [ -z ${!x} ] ; then 
-		echo ERROR: $x not defined;
-		exit 1;
-	fi;
-done;
-unset x;
+## for x in HOME PERL5LIB; do
+## 	echo $x=${!x}
+## 	if [ -z ${!x} ] ; then 
+## 		echo ERROR: $x not defined;
+## 		exit 1;
+## 	fi;
+## done;
+## unset x;
 # cd $PERL5LIB/C4/SIP;
 echo;
 echo Running from `pwd`;
 
 sipserver='./SIPServer.pm';
 sipconfig=${1:-`pwd`/SIPconfig.xml};
-outfile=${2:-$HOME/sip.out};
-errfile=${3:-$HOME/sip.err};
+## outfile=${2:-$HOME/sip.out};
+## errfile=${3:-$HOME/sip.err};
+
+outfile=${2:-/opt/invenio/var/log/sip/sip.out};
+errfile=${3:-/opt/invenio/var/log/sip/sip.err};
 
 if [ ! -r $sipconfig ] ; then
     echo "ERROR: Required SIP Configuration file not found at '$sipconfig'" >&2;
