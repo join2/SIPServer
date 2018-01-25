@@ -164,8 +164,11 @@ sub checkout {
 		$circ->screen_msg("Patron Blocked");
 	} elsif (!$item) {
 		$circ->screen_msg("Invalid Item");
-	} elsif (@{$item->hold_queue} && ($patron_id ne $item->hold_queue->[0])) {
-		$circ->screen_msg("Item on Hold for Another User");
+## the follwoing case should be up to the ILS to decide. E.g. join2
+## libSIP_join2 allows for a short loan in case another patron
+## requested the item.
+## 	} elsif (@{$item->hold_queue} && ($patron_id ne $item->hold_queue->[0])) {
+## 		$circ->screen_msg("Item on Hold for Another User");
 	} elsif ($item->{patron} && ($item->{patron} ne $patron_id)) {
 		# I can't deal with this right now
 		$circ->screen_msg("Item checked out to another patron");
