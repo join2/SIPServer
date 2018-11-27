@@ -25,8 +25,8 @@
 
   <!-- Set Net::Server::PreFork runtime parameters -->
   <server-params
-           min_servers='5'
-           min_spare_servers='1' />
+           min_servers='10'
+           min_spare_servers='2' />
   
   
   <listeners>
