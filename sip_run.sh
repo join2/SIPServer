@@ -36,6 +36,8 @@ sipconfig=${1:-`pwd`/SIPconfig.xml};
 outfile=${2:-/opt/invenio/var/log/sip/sip.out};
 errfile=${3:-/opt/invenio/var/log/sip/sip.err};
 
+mkdir -p /opt/invenio/var/log/sip
+
 if [ ! -r $sipconfig ] ; then
     echo "ERROR: Required SIP Configuration file not found at '$sipconfig'" >&2;
     exit 1;
